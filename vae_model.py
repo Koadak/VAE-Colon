@@ -108,7 +108,7 @@ class VAE(Model):
             class_loss = tf.reduce_mean(class_loss)  # Take mean over batch
 
             # Total loss (Reconstruction + EMD + Classification)
-            total_loss = recon_loss + emd_loss + class_loss
+            total_loss = recon_loss + class_loss# emd_loss + class_loss
 
         # grads = tape.gradient(total_loss, self.trainable_variables)
         grads = tape.gradient(total_loss, self.trainable_variables)
@@ -120,7 +120,7 @@ class VAE(Model):
         return {
             "loss": total_loss,
             "reconstruction_loss": recon_loss,
-            "emd_loss": emd_loss,
+            # "emd_loss": emd_loss,
             "classification_loss": class_loss
         }
 

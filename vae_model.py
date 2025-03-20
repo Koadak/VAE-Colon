@@ -91,7 +91,7 @@ class VAE(Model):
             reconstructed = self.decoder(z)
 
             # Reconstruction Loss (MSE)
-            recon_loss = -1 * self.mse_loss(images, reconstructed)
+            recon_loss = 1 * self.mse_loss(images, reconstructed)
 
             # Earth Mover's Distance (Sinkhorn)
             z_true = K.random_normal(shape=K.shape(z_mean))  # Sample from prior N(0,1)
@@ -108,11 +108,11 @@ class VAE(Model):
             class_loss = tf.reduce_mean(class_loss)  # Take mean over batch
 
             # Total loss (Reconstruction + EMD + Classification)
-            total_loss = recon_loss + class_loss# emd_loss + class_loss
+            total_loss = recon_loss + emd_loss + class_loss
 
         # grads = tape.gradient(total_loss, self.trainable_variables)
         grads = tape.gradient(total_loss, self.trainable_variables)
-        grads = [tf.clip_by_value(g, -1.0, 1.0) for g in grads]  # Clip gradients to avoid NaNs
+        # grads = [tf.clip_by_value(g, -1.0, 1.0) for g in grads]  # Clip gradients to avoid NaNs
         self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
 
         self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
@@ -120,7 +120,7 @@ class VAE(Model):
         return {
             "loss": total_loss,
             "reconstruction_loss": recon_loss,
-            # "emd_loss": emd_loss,
+            "emd_loss": emd_loss,
             "classification_loss": class_loss
         }
 

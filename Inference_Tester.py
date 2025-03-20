@@ -41,7 +41,7 @@ def preprocess_img(img_path):
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
-tum_sample = preprocess_img(r"C:\Users\jgdga\PycharmProjects\GPU_Tester\Kaggle\colon_adeno\colonca1.jpeg")
+tum_sample = preprocess_img(r"C:\Users\jgdga\PycharmProjects\GPU_Tester\Test_Train\TUM\TUM-TCGA-AAHMWWKY.png")
 
 # Encode image
 z_mean, z_log_var, z = encoder.predict(tum_sample)

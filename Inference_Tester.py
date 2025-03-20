@@ -28,7 +28,7 @@ z = Lambda(sampling, name="z")([z_mean, z_log_var])
 
 encoder = Model(inputs, [z_mean, z_log_var, z], name="encoder")
 
-# ✅ Load weights (now matches the correct architecture)
+# Load weights (now matches the correct architecture)
 encoder.load_weights("encoder_weights.h5")
 
 # ⚡ Load the decoder normally
@@ -46,13 +46,11 @@ tum_sample = preprocess_img(r"C:\Users\jgdga\PycharmProjects\GPU_Tester\Kaggle\c
 # Encode image
 z_mean, z_log_var, z = encoder.predict(tum_sample)
 
-# Modify latent vector (Shift towards NORM characteristics)
-alpha = 0.7
-norm_latent_mean = np.load("norm_latent_mean.npy")  # Load healthy latent space mean
-transformed_z = alpha * norm_latent_mean + (1 - alpha) * z
+z = np.array(z)  # Ensure it's a NumPy array
+z = z.reshape(1, LATENT_DIM)  # Ensure it has shape (1, 128)
 
 # Decode to get the transformed image
-transformed_img = decoder.predict(transformed_z)
+transformed_img = decoder.predict(z)
 
 # Display the transformed image
 plt.imshow(transformed_img[0])

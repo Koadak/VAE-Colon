@@ -2,21 +2,24 @@ import tensorflow as tf
 import pathlib
 import numpy as np
 from sklearn.model_selection import train_test_split
-from vae_model import create_vae  # Import VAE model
+from vae_model import create_vae  # Import updated VAE model
 
 # GPU check
 print(tf.config.list_physical_devices('GPU'))
 
 # Paths to datasets
-norm_path = pathlib.Path(r"C:\Users\jgdga\PycharmProjects\GPU_Tester\Test_Train\NORM")
+# norm_path = pathlib.Path(r"C:\Users\jgdga\PycharmProjects\GPU_Tester\Test_Train\NORM")
 tum_path = pathlib.Path(r"C:\Users\jgdga\PycharmProjects\GPU_Tester\Test_Train\TUM")
 
 # Load images
-norm_images = list(norm_path.glob("*.png"))[:700]
-tum_images = list(tum_path.glob("*.png"))[:700]
+# norm_images = list(norm_path.glob("*.png"))
+tum_images = list(tum_path.glob("*.png"))
 
-all_images = norm_images + tum_images  # Combine both classes
-all_labels = [0] * len(norm_images) + [1] * len(tum_images)  # Labels (0 = NORM, 1 = TUM)
+# all_images = norm_images + tum_images  # Combine both classes
+# all_labels = [0] * len(norm_images) + [1] * len(tum_images)  # Labels (0 = NORM, 1 = TUM)
+
+all_images = tum_images  # Combine both classes
+all_labels = [1] * len(tum_images)  # Labels (0 = NORM, 1 = TUM)
 
 # Convert paths to strings
 all_image_paths = [str(path) for path in all_images]
@@ -28,7 +31,7 @@ train_paths, test_paths, train_labels, test_labels = train_test_split(
 
 # Image processing parameters
 IMG_SIZE = (224, 224)
-BATCH_SIZE = 25
+BATCH_SIZE = 24
 
 # Function to process images
 def process_path(file_path, label):
@@ -50,12 +53,12 @@ test_dataset = test_dataset.map(process_path, num_parallel_calls=tf.data.AUTOTUN
 train_dataset = train_dataset.shuffle(buffer_size=len(train_paths)).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
-# Create and compile VAE model
+# Create and compile VAE model with the frozen classifier
 vae = create_vae()
 vae.compile(optimizer=tf.keras.optimizers.Adam())
 
 # Train VAE
-vae.fit(train_dataset, epochs=10, validation_data=test_dataset)
+vae.fit(train_dataset, epochs=5, validation_data=test_dataset)
 
 # Save trained models
 vae.encoder.save("encoder.h5")
@@ -65,21 +68,3 @@ vae.save_weights("vae_weights.h5")
 
 # Extract normal images from the test dataset for evaluation
 norm_test_paths = [p for p, label in zip(test_paths, test_labels) if label == 0]
-
-# Create a dataset with only normal images
-norm_test_dataset = tf.data.Dataset.from_tensor_slices((norm_test_paths, [0] * len(norm_test_paths)))
-norm_test_dataset = norm_test_dataset.map(process_path).batch(BATCH_SIZE)
-
-latent_means = []  # Store z_mean values
-
-# Pass normal images through the encoder
-for batch, _ in norm_test_dataset:
-    z_mean, _, _ = vae.encoder.predict(batch)  # Get z_mean only
-    latent_means.append(z_mean)
-
-# Compute the mean latent representation
-norm_latent_mean = np.mean(np.vstack(latent_means), axis=0)
-
-# Save the mean latent representation
-np.save("norm_latent_mean.npy", norm_latent_mean)
-print("Saved norm_latent_mean.npy successfully!")
